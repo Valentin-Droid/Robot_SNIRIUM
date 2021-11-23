@@ -19,7 +19,7 @@
 
 // Librairies utilisées
 #include <iostream>
-#include "robot.h"
+#include "robot.hpp"
 
 // Espaces de noms utilisés
 using namespace std;

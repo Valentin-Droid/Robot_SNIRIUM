@@ -7,14 +7,14 @@
 
 
 # Variables de compilation et déploiement
-IP_ROBOT=192.168.0.184
+IP_ROBOT=192.168.1.182
 CC=arm-linux-gnueabi-g++
 CFLAGS=-O2 -march=armv5
 CCFLAGS=-std=c++11 -D_GLIBCXX_USE_NANOSLEEP
 DEPS=ev3dev.h robot.hpp
 OBJ=ev3dev.o robot.o
 LIBS=-lstdc++ -lpthread
-EXEC=demo_leds
+EXEC=serveur_TCP
 
 
 # Règles de construction
