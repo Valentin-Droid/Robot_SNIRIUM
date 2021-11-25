@@ -1,5 +1,6 @@
 // Librairies nécessaires
 #include <iostream>
+#include <sstream>
 #include <unistd.h>
 #include <cerrno>
 #include <sys/un.h>
@@ -29,7 +30,13 @@ int main()
     cfg_serveur.sin_port = htons(1665);
 
     // Attachement de la socket au port défini
-    bind(sd_serveur, (struct sockaddr *)&cfg_serveur, sizeof(cfg_serveur));
+    int resultat = bind(sd_serveur, (struct sockaddr *)&cfg_serveur, sizeof(cfg_serveur));
+    if( resultat <0)
+    {
+        cout << "Erreur de port" << endl;
+        return -1;
+    }
+    
 
     // Création une file d'attente de connexion
     listen(sd_serveur, 5);
@@ -38,6 +45,10 @@ int main()
         // Dès qu’un nouveau client se connecte à notre serveur,
         // une nouvelle socket est créée pour gérer le client
         int sd_client = accept(sd_serveur, NULL, NULL);
+
+        monRobot.initialiserGyroscope();
+
+
         while(1)
         {
             // Réception de la requête du client
@@ -47,31 +58,59 @@ int main()
             string reponse(buffer);
             cout << reponse << endl;
 
-            if(reponse[0] == 'A')
-            {
-                monRobot.changerPuissanceMoteurs(100, 0, 100);
-                monRobot.attendre(3000);
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
-            }else if(reponse[0] == 'R')
-            {
-                monRobot.changerPuissanceMoteurs(-100, 0, -100);
-                monRobot.attendre(3000);
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
-            }else if(reponse[0] == 'G')
-            {
-                monRobot.changerPuissanceMoteurs(0, 0, 50);
-                monRobot.attendre(2000);
-                monRobot.changerPuissanceMoteurs(0, 0, 0);   
-            }else if(reponse[0] == 'D')
-            {
-                monRobot.changerPuissanceMoteurs(50, 0, 0);
-                monRobot.attendre(2000);
-                monRobot.changerPuissanceMoteurs(0, 0, 0);   
-            }
-
             // Envoi de la réponse au client
             string requete = "ok";
-            send(sd_client, requete.c_str(), requete.size(), 0);
+
+            if(reponse[0] == 'A')
+            {
+                monRobot.changerPuissanceMoteurs(0, 0, 0);
+                monRobot.changerPuissanceMoteurs(75, 0, 75);
+                send(sd_client, requete.c_str(), requete.size(), 0);
+            }else if(reponse[0] == 'R')
+            {
+                monRobot.changerPuissanceMoteurs(0, 0, 0);
+                monRobot.changerPuissanceMoteurs(-75, 0, -75);
+                send(sd_client, requete.c_str(), requete.size(), 0);
+            }else if(reponse[0] == 'G')
+            {
+                monRobot.changerPuissanceMoteurs(0, 0, 0);
+                monRobot.changerPuissanceMoteurs(-25, 0, 25);  
+                send(sd_client, requete.c_str(), requete.size(), 0);
+            }else if(reponse[0] == 'D')
+            {
+                monRobot.changerPuissanceMoteurs(0, 0, 0);
+                monRobot.changerPuissanceMoteurs(25, 0, -25); 
+                send(sd_client, requete.c_str(), requete.size(), 0); 
+            }else if(reponse[0] == 'S')
+            {
+                monRobot.changerPuissanceMoteurs(0, 0, 0);
+                send(sd_client, requete.c_str(), requete.size(), 0);
+            }else if(reponse[0] == 'L')
+            {
+                monRobot.changerPuissanceMoteurs(0, 0, 0);
+                monRobot.changerPuissanceMoteurs(0, 30, 0);
+                monRobot.attendre(1200);
+                monRobot.changerPuissanceMoteurs(0, 0, 0);
+                send(sd_client, requete.c_str(), requete.size(), 0);
+            }else if(reponse[0] == 'B')
+            {
+                monRobot.changerPuissanceMoteurs(0, 0, 0);
+                monRobot.changerPuissanceMoteurs(0, -30, 0);
+                monRobot.attendre(1200);
+                monRobot.changerPuissanceMoteurs(0, 0, 0);
+                send(sd_client, requete.c_str(), requete.size(), 0);
+            }else if(reponse[0] == 'P')
+            {
+                monRobot.parler("Fuck you", true);
+                send(sd_client, requete.c_str(), requete.size(), 0);
+            }else if(reponse[0] == 'T')
+            {   ostringstream chaine ;
+                chaine << monRobot.recupererLumiereReflechie() << ";" << monRobot.recupererGyroscopeAngle() << ";" << monRobot.recupererBatterieTension() << ";" << monRobot.recupererDistance() << ";" << monRobot.recupererPositionDuMoteur(Robot::GAUCHE) << "," << monRobot.recupererPositionDuMoteur(Robot::CENTRE) << "," << monRobot.recupererPositionDuMoteur(Robot::DROITE) << endl;
+                string trame = chaine.str();
+                cout << trame << endl;
+                send(sd_client, trame.c_str(), trame.size(), 0);
+            }
+            
         }
         // Fermeture de la socket client
         close(sd_client);
