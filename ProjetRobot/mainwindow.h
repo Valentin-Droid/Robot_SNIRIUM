@@ -6,7 +6,8 @@
 #include <QString>
 #include <QDebug>
 #include <QMessageBox>
-
+#include <QImage>
+#include <QTimer>
 
 namespace Ui {
     class MainWindow;
@@ -39,9 +40,19 @@ private slots:
 
     void on_Ga_clicked();
 
+    void on_St_clicked();
+
+    void on_MonterBras_clicked();
+
+    void on_BaisserBras_clicked();
+
+    void demander_Trame();
+
 private:
     Ui::MainWindow *ui;
     QTcpSocket *tcpSocket;
+    QImage *fondPlan;
+    QTimer *pTimer;
 };
 
 #endif // MAINWINDOW_H
