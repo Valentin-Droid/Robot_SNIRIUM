@@ -8,6 +8,9 @@
 #include <QMessageBox>
 #include <QImage>
 #include <QTimer>
+#include <QVector>
+#include <QPainter>
+#include <QChar>
 
 namespace Ui {
     class MainWindow;
@@ -48,11 +51,23 @@ private slots:
 
     void demander_Trame();
 
+    void dessiner_Robot();
+
+    QString Xor(QString trame);
+
 private:
     Ui::MainWindow *ui;
     QTcpSocket *tcpSocket;
     QImage *fondPlan;
     QTimer *pTimer;
+
+    QVector <int> sauvegardeRoueG;
+    QVector <int> sauvegardeRoueD;
+    QVector <int> sauvegardePx;
+    QVector <int> sauvegardePy;
+
+    unsigned short x1 = 375;
+    unsigned short y1 = 0;
 };
 
 #endif // MAINWINDOW_H
