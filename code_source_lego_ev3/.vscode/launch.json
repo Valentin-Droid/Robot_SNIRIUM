@@ -5,7 +5,9 @@
       "name": "C/C++ Runner: Debug Session",
       "type": "cppdbg",
       "request": "launch",
-      "args": [],
+      "args": [
+        ""
+      ],
       "stopAtEntry": false,
       "cwd": "/home/valentin/Documents/robot_snirium/Robot_SNIRIUM/code_source_lego_ev3",
       "environment": [],

@@ -7,9 +7,16 @@
 #include <arpa/inet.h>
 #include "robot.hpp"
 #include <string> 
+#include <pthread.h>    // pour pthread_create() et pthread_join()
+
 
 // Espace de nom utilisé
 using namespace std;
+
+// variable globale
+
+// Instanciation de l'objet robot
+Robot monRobot;
 
 //chiffrage xor de la trame
 string Xor(string trame)
@@ -24,16 +31,62 @@ string Xor(string trame)
     return encoder;
 }
 
-// Point d'entrée du programme
-int main()
+// fonction du thread robot
+void *robot(void *parametre)
 {
-
-    // Instanciation de l'objet robot
-	Robot monRobot;
-
     // Initialisation des moteurs et des tachymètres à 0
 	monRobot.initialiserMoteurs();
 
+    // Initialisation du gyroscope
+    monRobot.initialiserGyroscope();
+
+    if(reponse[0] == 'A')
+        {
+            monRobot.changerPuissanceMoteurs(0, 0, 0);
+            monRobot.changerPuissanceMoteurs(75, 0, 75);
+        }else if(reponse[0] == 'R')
+        {
+            monRobot.changerPuissanceMoteurs(0, 0, 0);
+            monRobot.changerPuissanceMoteurs(-75, 0, -75);
+        }else if(reponse[0] == 'G')
+        {
+            monRobot.changerPuissanceMoteurs(0, 0, 0);
+            monRobot.changerPuissanceMoteurs(-25, 0, 25);  
+        }else if(reponse[0] == 'D')
+        {
+            monRobot.changerPuissanceMoteurs(0, 0, 0);
+            monRobot.changerPuissanceMoteurs(25, 0, -25); 
+        }else if(reponse[0] == 'S')
+        {
+            monRobot.changerPuissanceMoteurs(0, 0, 0);
+        }else if(reponse[0] == 'L')
+        {
+            monRobot.changerPuissanceMoteurs(0, 0, 0);
+            monRobot.changerPuissanceMoteurs(0, 30, 0);
+            monRobot.attendre(1200);
+            monRobot.changerPuissanceMoteurs(0, 0, 0);
+        }else if(reponse[0] == 'B')
+        {
+            monRobot.changerPuissanceMoteurs(0, 0, 0);
+            monRobot.changerPuissanceMoteurs(0, -30, 0);
+            monRobot.attendre(1200);
+            monRobot.changerPuissanceMoteurs(0, 0, 0);
+        }else if(reponse[0] == 'P')
+        {
+            monRobot.parler("Fuck you", true);
+        }else if(reponse[0] == 'T')
+        {   
+            ostringstream chaine ;
+            chaine << monRobot.recupererLumiereReflechie() << ";" << monRobot.recupererGyroscopeAngle() << ";" << monRobot.recupererBatterieTension() << ";" << monRobot.recupererDistance() << ";" << monRobot.recupererPositionDuMoteur(Robot::GAUCHE) << ";" << monRobot.recupererPositionDuMoteur(Robot::DROITE);
+            string trame = Xor(chaine.str());
+            cout << trame << endl;
+        }
+
+}
+
+//fonction du thread réseau
+void *reseau(void *parametre)
+{
     // Création de la socket serveur
     int sd_serveur = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -48,10 +101,7 @@ int main()
     if( resultat <0)
     {
         cout << "Erreur de port" << endl;
-        return -1;
     }
-    
-
     // Création une file d'attente de connexion
     listen(sd_serveur, 5);
     while(1)
@@ -59,9 +109,6 @@ int main()
         // Dès qu’un nouveau client se connecte à notre serveur,
         // une nouvelle socket est créée pour gérer le client
         int sd_client = accept(sd_serveur, NULL, NULL);
-
-        monRobot.initialiserGyroscope();
-
 
         while(1)
         {
@@ -77,60 +124,60 @@ int main()
 
             if(reponse[0] == 'A')
             {
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
-                monRobot.changerPuissanceMoteurs(75, 0, 75);
                 send(sd_client, requete.c_str(), requete.size(), 0);
             }else if(reponse[0] == 'R')
             {
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
-                monRobot.changerPuissanceMoteurs(-75, 0, -75);
                 send(sd_client, requete.c_str(), requete.size(), 0);
             }else if(reponse[0] == 'G')
             {
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
-                monRobot.changerPuissanceMoteurs(-25, 0, 25);  
                 send(sd_client, requete.c_str(), requete.size(), 0);
             }else if(reponse[0] == 'D')
             {
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
-                monRobot.changerPuissanceMoteurs(25, 0, -25); 
                 send(sd_client, requete.c_str(), requete.size(), 0); 
             }else if(reponse[0] == 'S')
             {
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
                 send(sd_client, requete.c_str(), requete.size(), 0);
             }else if(reponse[0] == 'L')
             {
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
-                monRobot.changerPuissanceMoteurs(0, 30, 0);
-                monRobot.attendre(1200);
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
                 send(sd_client, requete.c_str(), requete.size(), 0);
             }else if(reponse[0] == 'B')
             {
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
-                monRobot.changerPuissanceMoteurs(0, -30, 0);
-                monRobot.attendre(1200);
-                monRobot.changerPuissanceMoteurs(0, 0, 0);
                 send(sd_client, requete.c_str(), requete.size(), 0);
             }else if(reponse[0] == 'P')
             {
-                monRobot.parler("Fuck you", true);
                 send(sd_client, requete.c_str(), requete.size(), 0);
             }else if(reponse[0] == 'T')
-            {   ostringstream chaine ;
-                chaine << monRobot.recupererLumiereReflechie() << ";" << monRobot.recupererGyroscopeAngle() << ";" << monRobot.recupererBatterieTension() << ";" << monRobot.recupererDistance() << ";" << monRobot.recupererPositionDuMoteur(Robot::GAUCHE) << ";" << monRobot.recupererPositionDuMoteur(Robot::DROITE);
-                string trame = Xor(chaine.str());
-                cout << trame << endl;
+            {
                 send(sd_client, trame.c_str(), trame.size(), 0);
             }
-            
         }
         // Fermeture de la socket client
         close(sd_client);
     }
     // Fermeture de la socket serveur
     close(sd_serveur);
+}
+
+// Point d'entrée du programme
+int main()
+{
+    // le thread réseau
+    pthread_t thread_reseau;
+
+    // le thread robot
+    pthread_t thread_robot;
+
+    // Creation de la thread réseau
+    pthread_create(&thread_reseau, NULL, reseau, NULL);
+
+    // Creation de la thread robot
+    pthread_create(&thread_robot, NULL, robot, NULL);
+
+    // Attente de la fin du thread réseau
+    pthread_join(thread_reseau, NULL);
+
+    // Attente de la fin du thread robot
+    pthread_join(thread_robot, NULL);
 
     // Fin du programme
     return 0;
